@@ -1,0 +1,3 @@
+# The official Anthropic SDK. Nothing else is needed for chapter 1 —
+# that is rather the point of chapter 1.
+anthropic>=0.40
