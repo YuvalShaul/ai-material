@@ -2,3 +2,6 @@
 __pycache__/
 .ipynb_checkpoints/
 .env
+04-the-agent-loop/scratch/
+04-the-agent-loop/audit.log
+04-the-agent-loop/checkpoints.sqlite
