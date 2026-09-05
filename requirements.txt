@@ -1,3 +1,12 @@
-# The official Anthropic SDK. Nothing else is needed for chapter 1 —
-# that is rather the point of chapter 1.
+# Chapters 1 and 3 need only the official Anthropic SDK. That is rather the
+# point of those chapters.
 anthropic>=0.40
+
+# Chapter 4, session 2: the LangChain 1.x stack. Pinned to the versions the
+# course's reference pages were verified against —
+# https://www.yuval.guide/ai/ai-top/ — do not float them.
+langchain-core==1.6.2
+langgraph==1.2.11
+langchain==1.4.0
+langchain-anthropic==1.7.1
+langgraph-checkpoint-sqlite==3.1.1
