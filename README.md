@@ -11,8 +11,13 @@ One directory per chapter. Each lesson tells you which file to run.
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...   # Windows: setx ANTHROPIC_API_KEY ...
+echo 'export ANTHROPIC_API_KEY=sk-ant-...' > .env
+source .env
 ```
+
+`.env` is ignored by git, so the key stays on your machine. In every new
+terminal, activate the venv and `source .env` again. On Windows, skip the
+`.env` lines and run `setx ANTHROPIC_API_KEY sk-ant-...` once instead.
 
 Every script here costs a fraction of a cent to run. `01-llms/5-cost.py`
 prints exactly how much.
