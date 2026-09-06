@@ -32,7 +32,7 @@ Do not suggest fixes. Do not restate the log lines.
 
 def ask(prompt):
     r = client.messages.create(
-        model=MODEL, max_tokens=1000,
+        model=MODEL, max_tokens=4000,   # room for the thinking the model does first; it counts as output
         messages=[{"role": "user", "content": prompt}],
     )
     text = "".join(b.text for b in r.content if b.type == "text")

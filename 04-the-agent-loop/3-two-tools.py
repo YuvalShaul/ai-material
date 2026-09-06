@@ -22,10 +22,11 @@ MODEL = "claude-opus-5"
 MAX_TURNS = 10            # <- the bound
 
 FILES = {
-    "README.md":     "# billing\n\nInvoices and payment runs.\n" + "Background prose.\n" * 40,
-    "payments.py":   "RETRY_LIMIT = 3\n\ndef charge(card, amount):\n    ...\n" + "# filler\n" * 40,
+    "README.md":     "# billing\n\nInvoices and payment runs. Start with `python app.py`.\n" + "Background prose.\n" * 40,
+    "app.py":        "import settings   # project settings first: they override module defaults\nimport payments\nimport invoices\n\n\ndef main():\n    ...\n" + "# filler\n" * 30,
+    "payments.py":   "RETRY_LIMIT = 3\n\ndef charge(card, amount):\n    for attempt in range(RETRY_LIMIT):\n        ...\n" + "# filler\n" * 40,
     "invoices.py":   "def render(invoice):\n    ...\n" + "# filler\n" * 60,
-    "settings.py":   "TIMEOUT = 30\nRETRY_LIMIT = 5   # overrides payments.py\n" + "# filler\n" * 30,
+    "settings.py":   "TIMEOUT = 30\nRETRY_LIMIT = 5   # overrides payments.py\n\nimport payments\npayments.RETRY_LIMIT = RETRY_LIMIT   # applied at startup, when app.py imports settings\n" + "# filler\n" * 30,
     "test_utils.py": "def fixture():\n    ...\n" + "# filler\n" * 50,
 }
 ROOT = pathlib.Path(tempfile.mkdtemp())
@@ -101,5 +102,5 @@ def run_agent(question: str) -> str:
 
 if __name__ == "__main__":
     question = sys.argv[1] if len(sys.argv) > 1 else \
-        "What is the effective retry limit, and which file wins?"
+        "What is the effective retry limit?"
     print(run_agent(question))
