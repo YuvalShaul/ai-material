@@ -76,7 +76,7 @@ def two_model_calls(question):
 def call_model(title, messages):
     """One request and one reply: the messages sent up, and the one that comes back."""
     print(f"=== {title} ===")
-    print_messages(messages)
+    print_messages(messages, TOOLS)
     reply = client.messages.create(model=MODEL, max_tokens=1000, tools=TOOLS, messages=messages)
     print_reply(reply)
     return reply

@@ -10,18 +10,46 @@ Nothing here talks to the API. It only prints.
 import json
 
 
-def print_messages(messages):
-    """The list being sent, one row per block."""
+def print_messages(messages, tools=None):
+    """The request: the list, one row per block, with the tool schemas.
+
+    The tools are a top-level argument rather than a message, so they have
+    no role of their own; they ride along with the first row. They go up on
+    every call.
+    """
     print(f"   {'role':<9} | blocks")
     print(f"{'-' * 12}-+-{'-' * 58}")
+    first = True
     for message in messages:
-        print_msg_blocks(f"-> {message['role']}", message["content"])
+        label = f"{arrow(message['role'])} {message['role']}"
+        if first and tools:
+            print(f"{label:<12} | tools: {tool_names(tools)}")
+            label = ""
+        print_msg_blocks(label, message["content"])
+        first = False
+
+
+def arrow(role):
+    """Which side the message came from: -> your code, <- the model.
+
+    An assistant message keeps its <- when the list is re-sent, because the
+    model is still the one that wrote it.
+    """
+    return "<-" if role == "assistant" else "->"
+
+
+def tool_names(tools):
+    """Just the names: what the model is choosing from."""
+    names = []
+    for tool in tools:
+        names.append(tool["name"])
+    return ", ".join(names)
 
 
 def print_reply(reply, tokens=False):
     """What came back: the turn boundary, then the blocks and the stop_reason."""
     print(f"{'- ' * 6}-+{'- ' * 29}".rstrip())
-    print_msg_blocks(f"<- {reply.role}", reply.content)
+    print_msg_blocks(f"{arrow(reply.role)} {reply.role}", reply.content)
     print(f"{'':<12} | stop_reason={reply.stop_reason}")
     if tokens:
         print(f"{'':<12} | sent {reply.usage.input_tokens} tokens, "
