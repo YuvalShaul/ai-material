@@ -3,9 +3,12 @@
 A messages list, a while loop, a dispatch table and one exit condition.
 Every agent you have used is this shape.
 
-Every turn prints the list it sends and the reply it gets, with the token
+Every call prints the list it sends and the reply it gets, with the token
 counts, so the cost of re-sending the whole conversation is something you
 watch rather than something you meet at the end of the month.
+
+A turn is the whole question-to-answer round (chapter 2); one turn is as
+many calls as the model needs.
 
     python 2-loop.py
 """
@@ -41,20 +44,21 @@ DISPATCH = {"lookup_stock": lookup_stock}
 # be defined further down.
 def run_agent(question: str) -> str:
     messages = [{"role": "user", "content": question}]        # the memory
-    turn = 0
+    call_number = 0
     while True:                                               # the loop
-        turn += 1
-        reply = call_model(f"turn {turn}", messages)
+        call_number += 1
+        reply = call_model(f"call {call_number}", messages)
         messages.append({"role": "assistant", "content": reply.content})
 
-        calls = collect_tool_calls(reply)
-        if not calls:                                         # the exit condition
+        tool_calls = collect_tool_calls(reply)
+        if not tool_calls:                                    # the exit condition
             return reply_text(reply)
 
         results = []
-        for call in calls:                                    # the dispatch
-            output = DISPATCH[call.name](**call.input)
-            results.append({"type": "tool_result", "tool_use_id": call.id, "content": str(output)})
+        for tool_call in tool_calls:                          # the dispatch
+            output = DISPATCH[tool_call.name](**tool_call.input)
+            results.append({"type": "tool_result", "tool_use_id": tool_call.id,
+                            "content": str(output)})
         messages.append({"role": "user", "content": results})
 # -------------------------------------------------------------------------
 

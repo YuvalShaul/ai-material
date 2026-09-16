@@ -40,7 +40,7 @@ print("--- call 1 ---")
 print("type       :", type(reply).__name__)
 print("tool_calls :", reply.tool_calls)              # parsed for you: name, args, id
 print("usage      :", reply.usage_metadata)
-messages.append(reply)                               # the assistant turn, as it came back
+messages.append(reply)                               # the assistant message, as it came back
 
 # --- you run the tool ----------------------------------------------------
 for call in reply.tool_calls:

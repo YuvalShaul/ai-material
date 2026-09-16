@@ -5,7 +5,7 @@ to find which file decides RETRY_LIMIT. This time the agent holds the
 grep and the read, and decides for itself which files are worth paying
 for. Same files, same question.
 
-The loop is the one from 2-loop.py, with a turn cap added: six lines,
+The loop is the one from 2-loop.py, with a cap on calls added: six lines,
 marked below.
 
     python 3-two-tools.py
@@ -21,7 +21,7 @@ from wire_view import print_messages, print_reply
 
 client = anthropic.Anthropic()
 MODEL = "claude-opus-5"
-MAX_TURNS = 10            # <- the bound
+MAX_CALLS = 10            # <- the bound
 
 FILES = {
     "README.md":     "# billing\n\nInvoices and payment runs. Start with `python app.py`.\n" + "Background prose.\n" * 40,
@@ -76,25 +76,26 @@ DISPATCH = {"search_files": search_files, "read_file": read_file}
 def run_agent(question: str) -> str:
     messages = [{"role": "user", "content": question}]
     total_in = total_out = 0
-    turn = 0
+    call_number = 0
     while True:
-        turn += 1
-        if turn > MAX_TURNS:                                  # <- the bound
-            raise RuntimeError(f"no answer after {MAX_TURNS} turns")
-        reply = call_model(f"turn {turn}", messages)
+        call_number += 1
+        if call_number > MAX_CALLS:                           # <- the bound
+            raise RuntimeError(f"no answer after {MAX_CALLS} calls")
+        reply = call_model(f"call {call_number}", messages)
         total_in += reply.usage.input_tokens                  # bookkeeping
         total_out += reply.usage.output_tokens
         messages.append({"role": "assistant", "content": reply.content})
 
-        calls = collect_tool_calls(reply)
-        if not calls:
-            print(f"total: {total_in} tokens sent, {total_out} received, {turn} turns")
+        tool_calls = collect_tool_calls(reply)
+        if not tool_calls:
+            print(f"total: {total_in} tokens sent, {total_out} received, {call_number} calls")
             return reply_text(reply)
 
         results = []
-        for call in calls:
-            output = DISPATCH[call.name](**call.input)
-            results.append({"type": "tool_result", "tool_use_id": call.id, "content": output})
+        for tool_call in tool_calls:
+            output = DISPATCH[tool_call.name](**tool_call.input)
+            results.append({"type": "tool_result", "tool_use_id": tool_call.id,
+                            "content": output})
         messages.append({"role": "user", "content": results})
 
 

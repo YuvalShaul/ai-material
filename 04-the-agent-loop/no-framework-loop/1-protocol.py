@@ -51,18 +51,19 @@ def two_model_calls(question):
     # call 1: the model asks for a tool, then halts
     reply = call_model("call 1", messages)
 
-    calls = collect_tool_calls(reply)
-    if not calls:
+    tool_calls = collect_tool_calls(reply)
+    if not tool_calls:
         raise SystemExit("Call 1 answered without asking for the tool: the exit condition came early.")
 
-    # the model's turn goes into the history exactly as it came back...
+    # the model's message goes into the history exactly as it came back...
     messages.append({"role": "assistant", "content": reply.content})
 
     # ...then YOUR code runs each tool, and every result goes up in one user message
     results = []
-    for call in calls:
-        output = lookup_stock(**call.input)
-        results.append({"type": "tool_result", "tool_use_id": call.id, "content": str(output)})
+    for tool_call in tool_calls:
+        output = lookup_stock(**tool_call.input)
+        results.append({"type": "tool_result", "tool_use_id": tool_call.id,
+                        "content": str(output)})
     messages.append({"role": "user", "content": results})
 
     # call 2: the model has the result, and answers

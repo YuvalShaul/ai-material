@@ -47,7 +47,7 @@ def tool_names(tools):
 
 
 def print_reply(reply, tokens=False):
-    """What came back: the turn boundary, then the blocks and the stop_reason."""
+    """What came back: the boundary line, then the blocks and the stop_reason."""
     print(f"{'- ' * 6}-+{'- ' * 29}".rstrip())
     print_msg_blocks(f"{arrow(reply.role)} {reply.role}", reply.content)
     print(f"{'':<12} | stop_reason={reply.stop_reason}")
