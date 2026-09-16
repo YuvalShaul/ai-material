@@ -17,6 +17,8 @@ import sys
 import tempfile
 import anthropic
 
+from wire_view import print_messages, print_reply
+
 client = anthropic.Anthropic()
 MODEL = "claude-opus-5"
 MAX_TURNS = 10            # <- the bound
@@ -79,25 +81,48 @@ def run_agent(question: str) -> str:
         turn += 1
         if turn > MAX_TURNS:                                  # <- the bound
             raise RuntimeError(f"no answer after {MAX_TURNS} turns")
-        r = client.messages.create(model=MODEL, max_tokens=1000, tools=TOOLS, messages=messages)
-        total_in += r.usage.input_tokens                      # bookkeeping
-        total_out += r.usage.output_tokens
-        print(f"turn {turn}: sent {r.usage.input_tokens:>5} tokens, "
-              f"got {r.usage.output_tokens:>4}, stop_reason={r.stop_reason}")
-        messages.append({"role": "assistant", "content": r.content})
+        reply = call_model(f"turn {turn}", messages)
+        total_in += reply.usage.input_tokens                  # bookkeeping
+        total_out += reply.usage.output_tokens
+        messages.append({"role": "assistant", "content": reply.content})
 
-        calls = [b for b in r.content if b.type == "tool_use"]
+        calls = collect_tool_calls(reply)
         if not calls:
             print(f"total: {total_in} tokens sent, {total_out} received, {turn} turns")
-            return "".join(b.text for b in r.content if b.type == "text")
+            return reply_text(reply)
 
         results = []
         for call in calls:
             output = DISPATCH[call.name](**call.input)
-            shown = output if len(output) < 70 else f"{len(output.splitlines())} lines"
-            print(f"        {call.name}({call.input}) -> {shown}")
             results.append({"type": "tool_result", "tool_use_id": call.id, "content": output})
         messages.append({"role": "user", "content": results})
+
+
+def call_model(title, messages):
+    """One request and one reply: the messages sent up, and the one that comes back."""
+    print(f"=== {title} ===")
+    print_messages(messages)
+    reply = client.messages.create(model=MODEL, max_tokens=1000, tools=TOOLS, messages=messages)
+    print_reply(reply, tokens=True)
+    return reply
+
+
+def collect_tool_calls(reply):
+    """The tool_use blocks in a reply, in the order they arrived."""
+    calls = []
+    for block in reply.content:
+        if block.type == "tool_use":
+            calls.append(block)
+    return calls
+
+
+def reply_text(reply):
+    """The text blocks of a reply, joined into the answer."""
+    parts = []
+    for block in reply.content:
+        if block.type == "text":
+            parts.append(block.text)
+    return "".join(parts)
 
 
 if __name__ == "__main__":

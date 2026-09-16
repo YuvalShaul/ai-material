@@ -12,8 +12,9 @@ protocol happen one message at a time.
     python 1-protocol.py
 """
 
-import json
 import anthropic
+
+from wire_view import print_messages, print_reply
 
 client = anthropic.Anthropic()
 MODEL = "claude-opus-5"
@@ -77,10 +78,7 @@ def call_model(title, messages):
     print(f"=== {title} ===")
     print_messages(messages)
     reply = client.messages.create(model=MODEL, max_tokens=1000, tools=TOOLS, messages=messages)
-    print(f"{'- ' * 6}-+{'- ' * 29}".rstrip())
-    print_msg_blocks(f"<- {reply.role}", reply.content)
-    print(f"{'':<12} | stop_reason={reply.stop_reason}")
-    print()
+    print_reply(reply)
     return reply
 
 
@@ -91,44 +89,6 @@ def collect_tool_calls(reply):
         if block.type == "tool_use":
             calls.append(block)
     return calls
-
-
-# ---- one row per block ---------------------------------------------------
-def print_messages(messages):
-    """The list being sent, one row per block."""
-    print(f"   {'role':<9} | blocks")
-    print(f"{'-' * 12}-+-{'-' * 58}")
-    for message in messages:
-        print_msg_blocks(f"-> {message['role']}", message["content"])
-
-
-def print_msg_blocks(label, content):
-    """One message: its label on the first row, then one row per block."""
-    if isinstance(content, str):
-        content = [{"type": "text", "text": content}]
-    first = True
-    for block in content:
-        print_block(label if first else "", block)
-        first = False
-
-
-def print_block(label, block):
-    """One row: the label column, then the block's two or three main fields."""
-    if not isinstance(block, dict):
-        block = block.model_dump()
-    kind = block["type"]
-    if kind == "text":
-        text = block["text"].replace("\n", " ")
-        if len(text) > 52:
-            text = text[:51] + "..."
-        fields = f'text "{text}"'
-    elif kind == "tool_use":
-        fields = f'tool_use {block["name"]} #{block["id"][6:14]}'
-    elif kind == "tool_result":
-        fields = f'tool_result "{block["content"]}" #{block["tool_use_id"][6:14]}'
-    else:
-        fields = kind
-    print(f"{label:<12} | {fields}")
 
 
 if __name__ == "__main__":
